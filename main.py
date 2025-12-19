@@ -1,5 +1,10 @@
+# main.py
 import pygame
 from settings import WIDTH, HEIGHT, FPS, BLACK
+
+import pygame
+from settings import WIDTH, HEIGHT, FPS
+from game import Game
 
 def main():
     pygame.init()
@@ -7,13 +12,18 @@ def main():
     pygame.display.set_caption("Pong")
     clock = pygame.time.Clock()
 
+    game = Game(screen)
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.fill(BLACK)
+        game.handle_input()
+        game.update()
+        game.draw()
+
         pygame.display.flip()
         clock.tick(FPS)
 
