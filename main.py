@@ -8,6 +8,7 @@ from game import Game
 
 def main():
     pygame.init()
+    pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Pong")
     clock = pygame.time.Clock()
