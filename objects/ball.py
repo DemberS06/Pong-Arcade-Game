@@ -74,3 +74,9 @@ class Ball:
             return True, 0, 0
 
         return False, 0, 0
+    
+    def get_pos(self):
+        return pygame.Vector2(self.pos)
+    
+    def get_vel(self):
+        return self.velocity
