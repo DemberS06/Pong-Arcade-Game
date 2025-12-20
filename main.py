@@ -33,7 +33,7 @@ def play(IAsL, IAsR):
     pygame.quit()
 
 def main():
-    for _ in range(20):
+    for _ in range(100):
         IAsL = []
         IAsR = []
 

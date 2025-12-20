@@ -87,8 +87,8 @@ class Game:
                     self.points_lft[i]+=lft
                     self.points_rgt[i]+=rgt
                 else:
-                    self.balls[i].speed+=0.1
-                    self.points_lft[i]+=0.1
+                    self.balls[i].speed+=0.01
+                    self.points_lft[i]+=1
             
             ball_pos=self.balls[i].get_pos()
             ball_vel=self.balls[i].get_vel()
