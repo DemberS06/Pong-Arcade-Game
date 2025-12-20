@@ -5,9 +5,9 @@ from settings import WIDTH, HEIGHT, FPS, BLACK
 import pygame
 from settings import WIDTH, HEIGHT, FPS, NUM_IA, layers_size
 from game import Game
-from IA import Genetic_IA
+from IA.IA import Genetic_IA
 
-def play(self, IAsL, IAsR):
+def play(IAsL, IAsR):
     pygame.init()
     pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
