@@ -35,7 +35,7 @@ class Game:
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
             self.balls.append(Ball(BALL_X, BALL_Y, color, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS))
             self.pad_lft.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
-            self.pad_rgt.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
+            self.pad_rgt.append(Paddle(PAD_RX, PAD_Y, color=color, active=True))
             self.points_lft.append(0)
             self.points_rgt.append(0)
 
@@ -62,7 +62,7 @@ class Game:
 
     def update(self):
         for i in range(NUM_IA):
-            if self.points_lft==3 or self.points_rgt==3:
+            if self.points_lft[i]==3 or self.points_rgt[i]==3:
                 continue
             objects = []
             objects.append(self.pad_lft[i])
