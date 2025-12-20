@@ -3,17 +3,18 @@ import pygame
 from settings import WIDTH, HEIGHT, FPS, BLACK
 
 import pygame
-from settings import WIDTH, HEIGHT, FPS
+from settings import WIDTH, HEIGHT, FPS, NUM_IA, layers_size
 from game import Game
+from IA import Genetic_IA
 
-def main():
+def play(self, IAsL, IAsR):
     pygame.init()
     pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Pong")
     clock = pygame.time.Clock()
 
-    game = Game(screen)
+    game = Game(screen, IAsL, IAsR)
 
     running = True
     while running:
@@ -22,13 +23,24 @@ def main():
                 running = False
 
         game.handle_input()
-        game.update()
+        running = game.update()
         game.draw()
 
         pygame.display.flip()
         clock.tick(FPS)
 
     pygame.quit()
+
+def main():
+    IAsL = []
+    IAsR = []
+
+    for i in range(NUM_IA):
+        IAsL.append(Genetic_IA(layers_size))
+        IAsR.append(Genetic_IA(layers_size))
+
+    play(IAsL, IAsR)
+    
 
 if __name__ == "__main__":
     main()
