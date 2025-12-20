@@ -51,7 +51,6 @@ class Ball:
         col_type, collision_point = nearest
         self.pos = pygame.Vector2(collision_point)
 
-        # si es score, no rebotamos
         if hasattr(nearest_obj, "score") and nearest_obj.score:
             self.pos = pygame.Vector2(WIDTH/2, HEIGHT/2)
             if nearest_obj.left:

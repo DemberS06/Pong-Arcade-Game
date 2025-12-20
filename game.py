@@ -1,7 +1,7 @@
 # game.py
 import pygame
 import random
-from settings import BLACK, WHITE
+from settings import BLACK, WHITE, WIDTH, HEIGHT
 from objects.paddle import Paddle
 
 from objects.wall import Wall
@@ -10,7 +10,7 @@ from settings import (
     PAD_LX, PAD_RX, PAD_Y,
     BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED, BALL_DIR,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT
+    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT, GEN
 )
 
 from objects.ball import Ball
@@ -24,7 +24,7 @@ class Game:
         self.IAsL=IAsL
         self.IAsR=IAsR
 
-        self.ball = Ball(BALL_X, BALL_Y, WHITE, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS)
+        self.ball = Ball(BALL_X, BALL_Y, WHITE, direction=pygame.Vector2(random.uniform(-1, 0), random.uniform(-1, 1)), speed=BALL_SPEED, radius=BALL_RADIUS)
         self.left_paddle =  Paddle(PAD_LX, PAD_Y, active=True)
         self.right_paddle = Paddle(PAD_RX, PAD_Y, active=True)
 
@@ -36,9 +36,11 @@ class Game:
         self.pointsl=0
         self.pointsr=0
 
+        BALL_DIR=pygame.Vector2(random.uniform(-1, -0.9), random.uniform(0.5, 0.8)*(0.5-random.randint(0, 1)))
+
         for i in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            self.balls.append(Ball(BALL_X, BALL_Y, color, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS))
+            self.balls.append(Ball(BALL_X, BALL_Y, color, direction=pygame.Vector2(random.uniform(-1, -0.9), random.uniform(-0.4, 0.4)), speed=BALL_SPEED, radius=BALL_RADIUS))
             self.pad_lft.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
             self.pad_rgt.append(Paddle(PAD_RX, PAD_Y, color=color, active=True))
             self.points_lft.append(0)
@@ -84,22 +86,22 @@ class Game:
 
             if collided:
                 if lft or rgt:
-                    self.pad_lft[i].points+=lft
+                    self.pad_lft[i].points+=lft-rgt*2
                     self.pad_rgt[i].points+=rgt
                 else:
                     self.balls[i].speed+=0.01
-                    self.pad_lft[i].points+=1
+                    self.pad_lft[i].points+=0.05
             
             ball_pos=self.balls[i].get_pos()
             ball_vel=self.balls[i].get_vel()
 
-            inputL = [self.pad_lft[i].rect.x, self.pad_lft[i].rect.y, ball_pos.x, ball_pos.y, ball_vel.x, ball_vel.y]
-            inputR = [self.pad_rgt[i].rect.x, self.pad_rgt[i].rect.y, ball_pos.x, ball_pos.y, ball_vel.x, ball_vel.y]
-
+            inputL = [self.pad_lft[i].rect.x/WIDTH, self.pad_lft[i].rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputR = [self.pad_rgt[i].rect.x/WIDTH, self.pad_rgt[i].rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputL[0]=0
             if TRAINING<=0:
-                self.pad_lft[i].move(self.IAsL[i].query(inputL))
+                self.pad_lft[i].points+=self.pad_lft[i].move(self.IAsL[i].query(inputL))/5000000 + (WIDTH-abs(self.pad_lft[i].rect.y+PAD_Y/2-ball_pos.y))/WIDTH/3000000
             if TRAINING>=0:
-                self.pad_rgt[i].move(self.IAsR[i].query(inputR))
+                self.pad_rgt[i].points+=self.pad_rgt[i].move(self.IAsR[i].query(inputR))/4000
         return ok
 
     def update(self):
@@ -107,31 +109,32 @@ class Game:
         if self.updateIA():
             return True
         else:
-            BestL = []
-            BestR = []
+            LBestL = []
+            LBestR = []
             mxl=0
             mxr=0
 
             for i in range(NUM_IA):
-                if self.points_lft[i]>self.points_lft[mxl]:
+                if self.points_lft[i]>=self.points_lft[mxl]:
                     mxl=i
-                    BestL.clear()
+                    LBestL.clear()
                 if self.points_lft[i]==self.points_lft[mxl]:
-                    BestL.append(self.IAsL[i])
+                    LBestL.append(self.IAsL[i])
                 
                 if self.points_rgt[i]>self.points_rgt[mxr]:
                     mxr=i
-                    BestR.clear()
+                    LBestR.clear()
                 if self.points_rgt[i]==self.points_rgt[mxr]:
-                    BestR.append(self.IAsR[i])
+                    LBestR.append(self.IAsR[i])
             
+            from main import BESTL, BESTR
             if TRAINING <= 0:
-                IALft = merge(BestL)
-                IALft.save_to_path(PATH_L+str(0)+".json")
+                BESTL = merge(LBestL)
+                BESTL.save_to_path(PATH_L+str(GEN)+".json")
             
             if TRAINING >=0:
-                IARgt = merge(BestR)
-                IARgt.save_to_path(PATH_R+str(0)+".json")
+                BESTR = merge(LBestR)
+                BESTR.save_to_path(PATH_R+str(GEN)+".json")
             
             return False
         

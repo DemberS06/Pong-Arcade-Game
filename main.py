@@ -6,7 +6,10 @@ import pygame
 from settings import WIDTH, HEIGHT, FPS, NUM_IA, layers_size, PATH_L, PATH_R, GEN
 from game import Game
 from IA.IA import Genetic_IA
-from IA.Evolution import mutate
+from IA.Evolution import mutate, merge
+
+BESTL = Genetic_IA(layers_size)
+BESTR = Genetic_IA(layers_size)
 
 def play(IAsL, IAsR):
     pygame.init()
@@ -33,17 +36,23 @@ def play(IAsL, IAsR):
     pygame.quit()
 
 def main():
-    for _ in range(100):
+    BESTL.load_from_path(PATH_L+str(GEN)+".json")
+    #BESTR.load_from_path(PATH_R+str(GEN)+".json")
+    for _ in range(1000):
         IAsL = []
         IAsR = []
 
+        dm = []
+        dm.append(BESTL)
+
         for i in range(NUM_IA):
-            IAsL.append(Genetic_IA(layers_size))
-            IAsR.append(Genetic_IA(layers_size))
-            IAsL[i].load_from_path(PATH_L+str(GEN)+".json")
-            IAsR[i].load_from_path(PATH_R+str(GEN)+".json")
-            mutate(IAsL[i])
-            mutate(IAsR[i])
+            IAsL.append(merge(dm))
+            IAsR.append(BESTR)
+            #IAsL[i].load_from_path(PATH_L+str(GEN)+".json")
+            #IAsR[i].load_from_path(PATH_R+str(GEN)+".json")
+            if i>0:
+                mutate(IAsL[i])
+                mutate(IAsR[i])
 
         play(IAsL, IAsR)
     
