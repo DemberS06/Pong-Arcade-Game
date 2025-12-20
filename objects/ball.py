@@ -25,22 +25,6 @@ class Ball:
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.pos.x), int(self.pos.y)), int(self.radius))
 
-    def _apply_horizontal_collision(self):
-        self.direction.y = -self.direction.y
-        if self.direction.length_squared() == 0:
-            self.direction = pygame.Vector2(1, 0)
-        else:
-            self.direction = self.direction.normalize()
-
-    def _apply_vertical_collision_random(self):
-        old_dx = self.direction.x
-        new_dx = -old_dx if abs(old_dx) > 1e-6 else -1.0
-        new_dy = random.uniform(-0.9, 0.9)
-        new_dir = pygame.Vector2(new_dx, new_dy)
-        if new_dir.length_squared() == 0:
-            new_dir = pygame.Vector2(-1 if new_dx < 0 else 1, 0)
-        self.direction = new_dir.normalize()
-
     def move_with_collision(self, objects):
         start = pygame.Vector2(self.pos)
         end = start + self.velocity
@@ -50,10 +34,9 @@ class Ball:
         nearest_d2 = None
 
         for obj in objects:
-            
             rect = getattr(obj, "rect", None)
             col_type, point = predict_segment_rect(start, end, rect, radius=self.radius)
-            if col_type == "none":
+            if col_type == 0:
                 continue
             d2 = (point - start).length_squared()
             if nearest is None or d2 < nearest_d2:
@@ -76,19 +59,13 @@ class Ball:
             else:
                 return True, 1, 0
             
-
-        # si es bounce horizontal
-        if col_type == "horizontal":
+        if col_type == 1: # Horizontal
             self.direction.y *= -1
             self.direction = self.direction.normalize()
             return True, 0, 0
 
-        # vertical, pero bounce normal
-        if col_type == "vertical":
-            # paddle o pared vertical rebote
-            # invertir X
+        if col_type == 2: # vertical
             self.direction.x *= -1
-            # añadir random pequeño a Y
             self.direction.y += random.uniform(-0.3, 0.3)
             if self.direction.length_squared() == 0:
                 self.direction = pygame.Vector2(1, 0)

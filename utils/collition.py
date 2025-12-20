@@ -1,5 +1,4 @@
 # collition.py
-
 from typing import Tuple
 import math
 import pygame
@@ -11,12 +10,12 @@ def predict_segment_rect(
     end: pygame.Vector2,
     rect: pygame.Rect,
     radius: float = 0.0
-) -> Tuple[str, pygame.Vector2]:
+) -> Tuple[int, pygame.Vector2]:
     start_v = pygame.Vector2(start)
     vel = pygame.Vector2(end) - start_v
 
     if vel.length_squared() < EPS:
-        return "none", pygame.Vector2(end)
+        return 0, pygame.Vector2(end) # None
 
     expanded = pygame.Rect(
         rect.left - radius,
@@ -27,23 +26,23 @@ def predict_segment_rect(
 
     res = _ray_aabb_time(start_v, vel, expanded)
     if res is None:
-        return "none", pygame.Vector2(end)
+        return 0, pygame.Vector2(end) # None
 
     t_entry, t_exit, normal = res
     
     if t_entry < -EPS or t_entry > 1.0 + EPS:
-        return "none", pygame.Vector2(end)
+        return 0, pygame.Vector2(end) # None
 
     collision_point = start_v + vel * max(0.0, min(1.0, t_entry))
 
     if abs(normal.x) > 0.5:
-        return "vertical", collision_point
+        return 2, collision_point # Vertical
     if abs(normal.y) > 0.5:
-        return "horizontal", collision_point
+        return 1, collision_point # Horizontal
 
     if abs(normal.x) >= abs(normal.y):
-        return "vertical", collision_point
-    return "horizontal", collision_point
+        return 2, collision_point # Vertical
+    return 1, collision_point     # Horizontal
 
 
 def _ray_aabb_time(
@@ -51,18 +50,13 @@ def _ray_aabb_time(
     vel: pygame.Vector2,
     rect: pygame.Rect
 ):
-    """
-    Ray (pos, vel) vs AABB(rect) — devuelve (t_entry, t_exit, normal) o None.
-    t_entry/t_exit en unidades relativas a vel (i.e., t en [0,1] para segment).
-    normal: vector que aproxima la normal de la cara de entrada.
-    """
+
     px, py = float(pos.x), float(pos.y)
     vx, vy = float(vel.x), float(vel.y)
 
     left, right = float(rect.left), float(rect.right)
     top, bottom = float(rect.top), float(rect.bottom)
 
-    # X axis
     if abs(vx) < EPS:
         if px < left or px > right:
             return None
@@ -74,7 +68,6 @@ def _ray_aabb_time(
         tx_entry = min(tx1, tx2)
         tx_exit = max(tx1, tx2)
 
-    # Y axis
     if abs(vy) < EPS:
         if py < top or py > bottom:
             return None
@@ -94,7 +87,6 @@ def _ray_aabb_time(
     if t_exit < 0:
         return None
 
-    # decidir normal por qué eje produce t_entry
     if abs(vx) < EPS:
         tx_entry = -math.inf
     else:
