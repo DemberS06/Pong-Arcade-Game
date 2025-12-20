@@ -25,7 +25,8 @@ def merge(i_list: List[Genetic_IA]) -> Genetic_IA:
 
 
 def mutate(ia: Genetic_IA):
-    for layer in ia.layers:
+    nw_ia=ia
+    for layer in nw_ia.layers:
         for r, row in enumerate(layer["weights"]):
             for c in range(len(row)):
                 if random.random() < MUTATION_PROB:
@@ -34,3 +35,4 @@ def mutate(ia: Genetic_IA):
         for b in range(len(layer["bias"])):
             if random.random() < MUTATION_PROB:
                 layer["bias"][b] += random.uniform(-MUTATION_STRENGTH, MUTATION_STRENGTH)
+    return nw_ia

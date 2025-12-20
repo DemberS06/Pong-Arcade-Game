@@ -10,7 +10,7 @@ from settings import (
     PAD_LX, PAD_RX, PAD_Y,
     BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED, BALL_DIR,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R
+    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT
 )
 
 from objects.ball import Ball
@@ -68,7 +68,7 @@ class Game:
     def updateIA(self):
         ok = False
         for i in range(NUM_IA):
-            if self.points_lft[i]>=3 or self.points_rgt[i]>=3:
+            if self.points_lft[i]>=PNTS_LMT or self.points_rgt[i]>=PNTS_LMT:
                 continue
             else:
                 ok=True
@@ -175,7 +175,7 @@ class Game:
         #self.ball.draw(self.screen)
 
         for i in range (NUM_IA):
-            if self.points_lft[i]>=3 or self.points_rgt[i]>=3:
+            if self.points_lft[i]>=PNTS_LMT or self.points_rgt[i]>=PNTS_LMT:
                 continue
             font = pygame.font.SysFont("Arial", 48)
             score_text = font.render(str(self.points_lft[i])+"   "+str(self.points_rgt[i]), True, (255,255,255))
