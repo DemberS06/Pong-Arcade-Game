@@ -1,7 +1,7 @@
 # Evolution.py
 import random
 from typing import List
-from IA import Genetic_IA
+from IA.IA import Genetic_IA
 from settings import MUTATION_PROB, MUTATION_STRENGTH
 
 def merge(i_list: List[Genetic_IA]) -> Genetic_IA:
