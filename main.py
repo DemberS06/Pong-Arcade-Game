@@ -37,16 +37,13 @@ def main():
         IAsL = []
         IAsR = []
 
-        BEST_L = Genetic_IA(layers_size)
-        BEST_R = Genetic_IA(layers_size)
-
-        BEST_L.load_from_path(PATH_L+str(GEN)+".json")
-        BEST_R.load_from_path(PATH_R+str(GEN)+".json")
-
         for i in range(NUM_IA):
-            IAsL.append(mutate(BEST_L))
-            IAsR.append(mutate(BEST_R))
-            
+            IAsL.append(Genetic_IA(layers_size))
+            IAsR.append(Genetic_IA(layers_size))
+            IAsL[i].load_from_path(PATH_L+str(GEN)+".json")
+            IAsR[i].load_from_path(PATH_R+str(GEN)+".json")
+            mutate(IAsL[i])
+            mutate(IAsR[i])
 
         play(IAsL, IAsR)
     

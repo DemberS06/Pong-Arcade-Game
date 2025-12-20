@@ -25,14 +25,14 @@ def merge(i_list: List[Genetic_IA]) -> Genetic_IA:
 
 
 def mutate(ia: Genetic_IA):
-    nw_ia=ia
-    for layer in nw_ia.layers:
+    for layer in ia.layers:
         for r, row in enumerate(layer["weights"]):
             for c in range(len(row)):
                 if random.random() < MUTATION_PROB:
                     row[c] += random.uniform(-MUTATION_STRENGTH, MUTATION_STRENGTH)
+                row[c]=max(-1, min(row[c], 1))
 
         for b in range(len(layer["bias"])):
             if random.random() < MUTATION_PROB:
                 layer["bias"][b] += random.uniform(-MUTATION_STRENGTH, MUTATION_STRENGTH)
-    return nw_ia
+            layer["bias"][b]=max(min(layer["bias"][b], len(layer["bias"])), -len(layer["bias"]))
