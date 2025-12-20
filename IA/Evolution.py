@@ -1,7 +1,7 @@
 # Evolution.py
 import random
 from typing import List
-from IA import Genetic_IA
+from IA.IA import Genetic_IA
 from settings import MUTATION_PROB, MUTATION_STRENGTH
 
 def merge(i_list: List[Genetic_IA]) -> Genetic_IA:
@@ -30,7 +30,9 @@ def mutate(ia: Genetic_IA):
             for c in range(len(row)):
                 if random.random() < MUTATION_PROB:
                     row[c] += random.uniform(-MUTATION_STRENGTH, MUTATION_STRENGTH)
+                row[c]=max(-1, min(row[c], 1))
 
         for b in range(len(layer["bias"])):
             if random.random() < MUTATION_PROB:
                 layer["bias"][b] += random.uniform(-MUTATION_STRENGTH, MUTATION_STRENGTH)
+            layer["bias"][b]=max(min(layer["bias"][b], len(layer["bias"])), -len(layer["bias"]))
