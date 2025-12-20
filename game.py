@@ -1,14 +1,16 @@
 # game.py
 import pygame
-from settings import WIDTH, HEIGHT, BLACK, WHITE
+import random
+from settings import BLACK, WHITE
 from objects.paddle import Paddle
 
 from objects.wall import Wall
+
 from settings import (
-    WIDTH, HEIGHT,
-    WALL_THICKNESS,
-    TOP_WALL_Y, BOTTOM_WALL_Y,
-    LEFT_WALL_X, RIGHT_WALL_X, PADDLE_x, PADDLE_WIDTH
+    PAD_LX, PAD_RX, PAD_Y,
+    BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED, BALL_DIR,
+    WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
+    SCORE_X, SCORE_Y, NUM_IA
 )
 
 from objects.ball import Ball
@@ -16,20 +18,36 @@ from objects.ball import Ball
 class Game:
     def __init__(self, screen):
         self.screen = screen
-        self.ball = Ball(WIDTH/2, HEIGHT/2, WHITE, direction=(0.8, -0.6), speed=6, radius=8)
-        self.left_paddle = Paddle(PADDLE_x,                         HEIGHT // 2 - 50, active=True)
-        self.right_paddle = Paddle(WIDTH - PADDLE_x - PADDLE_WIDTH, HEIGHT // 2 - 50, active=False)
-        self.walls = [
-            # horizontales (rebote)
-            Wall(True, PADDLE_x, 3*WALL_THICKNESS,          WIDTH-2*PADDLE_x, bounce=True, score=False, color=WHITE),
-            Wall(True, PADDLE_x, HEIGHT - 4*WALL_THICKNESS, WIDTH-2*PADDLE_x, bounce=True, score=False, color=WHITE),
+        self.ball = Ball(BALL_X, BALL_Y, WHITE, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS)
+        
+        self.left_paddle =  Paddle(PAD_LX, PAD_Y, active=True)
+        self.right_paddle = Paddle(PAD_RX, PAD_Y, active=True)
 
-            # verticales (puntos)
-            Wall(False, 0,                                 0, HEIGHT, bounce=False, score=True, left=True, color=BLACK),
-            Wall(False, WIDTH - WALL_THICKNESS, 0, HEIGHT, bounce=False, score=True, left=False, color=BLACK),
-        ]
+        self.balls = []
+        self.pad_lft = []
+        self.pad_rgt = []
+        self.points_lft = []
+        self.points_rgt = []
         self.pointsl=0
         self.pointsr=0
+
+        for i in range(NUM_IA):
+            color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
+            self.balls.append(Ball(BALL_X, BALL_Y, color, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS))
+            self.pad_lft.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
+            self.pad_rgt.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
+            self.points_lft.append(0)
+            self.points_rgt.append(0)
+
+        self.walls = [
+            # horizontales (rebote)
+            Wall(True, WALL_HX, WALL_UY, WALL_HLN, bounce=True, score=False, color=WHITE),
+            Wall(True, WALL_HX, WALL_DY, WALL_HLN, bounce=True, score=False, color=WHITE),
+
+            # verticales (puntos)
+            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=True, score=False, left=True,  color=WHITE),
+            Wall(False, WALL_RX, WALL_VY, WALL_VLN, bounce=True, score=False, left=False, color=WHITE),
+        ]
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -43,7 +61,27 @@ class Game:
             self.right_paddle.move(1)
 
     def update(self):
-        objects = []
+        for i in range(NUM_IA):
+            if self.points_lft==3 or self.points_rgt==3:
+                continue
+            objects = []
+            objects.append(self.pad_lft[i])
+            objects.append(self.pad_rgt[i])
+            
+            for w in self.walls:
+                if w.active:
+                    objects.append(w)
+            
+            collided, lft, rgt = self.balls[i].move_with_collision(objects)
+
+            if collided:
+                if lft or rgt:
+                    self.points_lft[i]+=lft
+                    self.points_rgt[i]+=rgt
+                else:
+                    self.balls[i].speed+=0.1
+
+        """objects = []
         #if self.left_paddle.active:
         objects.append(self.left_paddle)
         #if self.right_paddle.active:
@@ -60,7 +98,7 @@ class Game:
                 self.pointsl+=lft
                 self.pointsr+=rgt
             else:
-                self.ball.speed+=0.1
+                self.ball.speed+=0.1"""
         pass
 
     def draw(self):
@@ -68,10 +106,17 @@ class Game:
         for wall in self.walls:
             if wall.active:
                 wall.draw(self.screen)
-        self.left_paddle.draw(self.screen)
-        self.right_paddle.draw(self.screen)
-        self.ball.draw(self.screen)
+
+        for pd in self.pad_lft:
+            pd.draw(self.screen)
+        for pd in self.pad_rgt:
+            pd.draw(self.screen)
+        for bll in self.balls:
+            bll.draw(self.screen)
+        #self.left_paddle.draw(self.screen)
+        #self.right_paddle.draw(self.screen)
+        #self.ball.draw(self.screen)
         font = pygame.font.SysFont("Arial", 48)
         score_text = font.render(str(self.pointsl)+"   "+str(self.pointsr), True, (255,255,255))
-        self.screen.blit(score_text, (WIDTH/2, 30))
+        self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
