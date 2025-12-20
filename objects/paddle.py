@@ -12,6 +12,7 @@ class Paddle:
         self.speed = PADDLE_SPEED
         self.color = color
         self.active = active
+        self.points = 0
 
     def move(self, direction):
         self.rect.y += direction * self.speed

@@ -68,7 +68,7 @@ class Game:
     def updateIA(self):
         ok = False
         for i in range(NUM_IA):
-            if self.points_lft[i]>=PNTS_LMT or self.points_rgt[i]>=PNTS_LMT:
+            if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
                 continue
             else:
                 ok=True
@@ -84,11 +84,11 @@ class Game:
 
             if collided:
                 if lft or rgt:
-                    self.points_lft[i]+=lft
-                    self.points_rgt[i]+=rgt
+                    self.pad_lft[i].points+=lft
+                    self.pad_rgt[i].points+=rgt
                 else:
                     self.balls[i].speed+=0.01
-                    self.points_lft[i]+=1
+                    self.pad_lft[i].points+=1
             
             ball_pos=self.balls[i].get_pos()
             ball_vel=self.balls[i].get_vel()
@@ -162,22 +162,21 @@ class Game:
             if wall.active:
                 wall.draw(self.screen)
 
-        if TRAINING<=0:
-            for pd in self.pad_lft:
-                pd.draw(self.screen)
-        if TRAINING>=0:
-            for pd in self.pad_rgt:
-                pd.draw(self.screen)
-        for bll in self.balls:
-            bll.draw(self.screen)
         #self.left_paddle.draw(self.screen)
         #self.right_paddle.draw(self.screen)
         #self.ball.draw(self.screen)
 
         for i in range (NUM_IA):
-            if self.points_lft[i]>=PNTS_LMT or self.points_rgt[i]>=PNTS_LMT:
+            if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
                 continue
+            
+            if TRAINING<=0:
+                self.pad_lft[i].draw(self.screen)
+            if TRAINING>=0:
+                self.pad_rgt[i].draw(self.screen)
+            self.balls[i].draw(self.screen)
+
             font = pygame.font.SysFont("Arial", 48)
-            score_text = font.render(str(self.points_lft[i])+"   "+str(self.points_rgt[i]), True, (255,255,255))
+            score_text = font.render(str(self.pad_lft[i].points)+"   "+str(self.pad_rgt[i].points), True, (255,255,255))
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
