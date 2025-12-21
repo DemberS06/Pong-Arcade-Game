@@ -4,10 +4,9 @@ import random
 from settings import BLACK, WHITE, WIDTH, HEIGHT
 
 from settings import (
-    PAD_LX, PAD_RX, PAD_Y,
-    BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED,
+    BALL_SPEED, PATH_L, PATH_R, SCORE_X, SCORE_Y, 
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT, GEN
+    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM
 )
 
 from objects.paddle import Paddle
@@ -29,7 +28,7 @@ class Game:
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            dir = pygame.Vector2(random.uniform(-1, -0.9), random.uniform(-0.4, 0.4))
+            dir = pygame.Vector2(random.uniform(-1, -0.9), (1.0-random.randint(0, 0))*random.uniform(-0.4, 0.4))
             self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
 
         self.walls = [
@@ -54,17 +53,17 @@ class Game:
             self.match.rgt.move(1)
 
     def get_fitness(self, coll, p1, p2, ly, ny, by, mv):
-        res = p1-p2
-        if coll: res+=0.05
-        res+=(abs(ny-by)/WIDTH) * 0.00001
-        res+=(1-abs(ly-ny)/WIDTH)*0.00003
+        res = p1
+        if coll: res+=             U_COL
+        res+=(1-abs(ny-by)/HEIGHT)*U_DIS
+        res+=(  abs(ly-ny)/HEIGHT)*U_MOV
 
         if mv!=0 and ly==ny:
-            res-=0.1
+            res+=U_LIM
 
         return res
 
-    def save_IA(self):
+    def save_IA(self, IAsL, IAsR):
         LBestL = []
         LBestR = []
         mxl=0
@@ -83,14 +82,13 @@ class Game:
             if self.matchs[i].rgt_points==self.matchs[mxr].rgt_points:
                 LBestR.append(self.IAsR[i])
         
-        from main import BESTL, BESTR
         if TRAINING <= 0:
-            BESTL = merge(LBestL)
-            BESTL.save_to_path(PATH_L+str(GEN)+".json")
+            IAsL[0] = merge(LBestL)
+            IAsL[0].save_to_path(PATH_L+str(GEN)+".json")
         
         if TRAINING >=0:
-            BESTR = merge(LBestR)
-            BESTR.save_to_path(PATH_R+str(GEN)+".json")
+            IAsR[0] = merge(LBestR)
+            IAsR[0].save_to_path(PATH_R+str(GEN)+".json")
 
     def updateIA(self):
         ok = False
@@ -108,9 +106,6 @@ class Game:
                     obj.append(w)
             
             collided, lft, rgt = M.ball.move_with_collision(obj)
-
-            if collided:
-                M.lft_points+=0.05
             
             ball_pos=M.ball.get_pos()
             ball_vel=M.ball.get_vel()

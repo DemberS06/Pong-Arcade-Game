@@ -8,10 +8,7 @@ from game import Game
 from IA.IA import Genetic_IA
 from IA.Evolution import mutate, merge
 
-BESTL = Genetic_IA(layers_size)
-BESTR = Genetic_IA(layers_size)
-
-def play(IAsL, IAsR):
+def play(IAsL, IAsR, BESTL, BESTR):
     pygame.init()
     pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -32,29 +29,31 @@ def play(IAsL, IAsR):
 
         pygame.display.flip()
         clock.tick(FPS)
-    game.save_IA()
+    game.save_IA(IAsL, IAsR)
     pygame.quit()
 
 def main():
+    BESTL = Genetic_IA(layers_size)
+    BESTR = Genetic_IA(layers_size)
+
     BESTL.load_from_path(PATH_L+str(GEN)+".json")
-    #BESTR.load_from_path(PATH_R+str(GEN)+".json")
+    BESTR.load_from_path(PATH_R+str(GEN)+".json")
     for _ in range(1000):
         IAsL = []
         IAsR = []
 
-        dm = []
-        dm.append(BESTL)
-
         for i in range(NUM_IA):
-            IAsL.append(merge(dm))
+            IAsL.append(BESTL)
             IAsR.append(BESTR)
-            #IAsL[i].load_from_path(PATH_L+str(GEN)+".json")
-            #IAsR[i].load_from_path(PATH_R+str(GEN)+".json")
+            
             if i>0:
                 mutate(IAsL[i])
                 mutate(IAsR[i])
 
-        play(IAsL, IAsR)
+        play(IAsL, IAsR, BESTL, BESTR)
+
+        BESTL=IAsL[0]
+        BESTR=IAsR[0]
     
 
 if __name__ == "__main__":
