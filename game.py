@@ -6,7 +6,7 @@ from settings import BLACK, WHITE, WIDTH, HEIGHT
 from settings import (
     PADDLE_HEIGHT, BALL_A, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM,
+    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM, U_WIN,
     P_LFT_IA, P_RGT_IA
 )
 
@@ -26,7 +26,7 @@ class Game:
         if i%2<=0: self.nUPG=NUM_IA-UPG
 
         self.matchs = []
-        self.match = Match(pdl_lfta=False, pdl_rgta=False)
+        self.match = Match(pdl_lfta=True, pdl_rgta=True)
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
@@ -42,7 +42,7 @@ class Game:
             Wall(True, WALL_HX, WALL_DY, WALL_HLN, bounce=True, score=False, color=WHITE),
 
             # verticales (puntos)
-            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=True, score=False, left=True,  color=WHITE),
+            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=False, score=True, left=True,  color=BLACK),
             Wall(False, WALL_RX, WALL_VY, WALL_VLN, bounce=False, score=True, left=False, color=BLACK),
         ]
 
@@ -58,7 +58,7 @@ class Game:
             self.match.rgt.move(1)
 
     def get_fitness(self, coll, p1, p2, ly, ny, by, mv):
-        res = p1
+        res = p1*U_WIN
         if coll: res+=             U_COL
         res+=(1-abs(ny+PADDLE_HEIGHT/2-by)/HEIGHT)*U_DIS
         res+=(  abs(ly-ny)/HEIGHT)*U_MOV
@@ -167,19 +167,23 @@ class Game:
         
         return True
 
-    def draw(self):
+    def draw(self, i = -1):
         self.screen.fill(BLACK)
         for wall in self.walls:
             if wall.active:
                 wall.draw(self.screen)
 
-        if self.match.active(PNTS_LMT):
+
+        if i==-1 and self.match.active(PNTS_LMT):
             self.match.lft.draw(self.screen)
             self.match.rgt.draw(self.screen)
             self.match.ball.draw(self.screen)
             font = pygame.font.SysFont("Arial", 48)
             score_text = font.render(str(self.match.lft_points)+"   "+str(self.match.rgt_points), True, self.match.color)
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
+            return
+
+        ok = 0
 
         for M in self.matchs:
             if M.active(PNTS_LMT)==False:
@@ -191,7 +195,9 @@ class Game:
                 M.rgt.draw(self.screen)
             M.ball.draw(self.screen)
 
+            if ok: continue
+            ok=1
             font = pygame.font.SysFont("Arial", 48)
-            score_text = font.render(str(M.lft_points)+"   "+str(M.rgt_points), True, M.color)
+            score_text = font.render("G: "+str(i)+"                   "+str(M.lft_points)+"   "+str(M.rgt_points), True, M.color)
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 

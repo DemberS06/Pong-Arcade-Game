@@ -72,7 +72,7 @@ def training():
 
             game.handle_input()
             running = running and game.updateIA(IAsL, IAsR)
-            game.draw()
+            game.draw(_)
 
             pygame.display.flip()
             clock.tick(FPS)
@@ -85,8 +85,8 @@ def training():
 
 
 def main():
-    training()
-    #play()
+    #training()
+    play()
     
 
 if __name__ == "__main__":
