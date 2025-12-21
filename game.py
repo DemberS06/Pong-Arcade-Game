@@ -4,7 +4,7 @@ import random
 from settings import BLACK, WHITE, WIDTH, HEIGHT
 
 from settings import (
-    BALL_SPEED, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
+    PADDLE_HEIGHT, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
     NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM
 )
@@ -28,7 +28,7 @@ class Game:
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            dir = pygame.Vector2(random.uniform(-1, -0.9), (0.5-random.randint(0, 0))*random.uniform(0.4, 0.8))
+            dir = pygame.Vector2(random.uniform(-0.7, -0.8), (0.5-random.randint(0, 0))*random.uniform(0.9, 0.9))
             self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
 
         for i in range(min(NUM_IA, UPG)):
@@ -58,11 +58,9 @@ class Game:
     def get_fitness(self, coll, p1, p2, ly, ny, by, mv):
         res = p1
         if coll: res+=             U_COL
-        res+=(1-abs(ny-by)/HEIGHT)*U_DIS
+        res+=(1-abs(ny+PADDLE_HEIGHT/2-by)/HEIGHT)*U_DIS
         res+=(  abs(ly-ny)/HEIGHT)*U_MOV
-
-        if mv!=0 and ly==ny:
-            res+=U_LIM
+        if mv!=0 and ly==ny: res+= U_LIM
 
         return res
 
@@ -115,9 +113,9 @@ class Game:
             ball_pos=M.ball.get_pos()
             ball_vel=M.ball.get_vel()
 
-            inputL = [M.lft.rect.x/WIDTH, M.lft.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
-            inputR = [M.rgt.rect.x/WIDTH, M.rgt.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
-            inputL[0]=0
+            inputL = [(M.lft.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-M.lft.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-M.lft.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
+            inputR = [(M.rgt.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-M.rgt.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-M.rgt.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
+            
 
             if TRAINING<=0:
                 ly=M.lft.rect.y

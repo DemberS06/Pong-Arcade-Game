@@ -8,7 +8,7 @@ from game import Game
 from IA.IA import Genetic_IA
 from IA.Evolution import mutate, merge
 
-def play(IAsL, IAsR, BESTL, BESTR):
+def play(IAsL, IAsR):
     pygame.init()
     pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -37,8 +37,8 @@ def main():
     BESTR = Genetic_IA(layers_size)
 
     BESTL.load_from_path(PATH_L+str(GEN)+".json")
-    BESTR.load_from_path(PATH_R+str(GEN)+".json")
-    for _ in range(1000):
+    #BESTR.load_from_path(PATH_R+str(GEN)+".json")
+    for _ in range(10000):
         IAsL = []
         IAsR = []
 
@@ -50,7 +50,7 @@ def main():
                 mutate(IAsL[i])
                 mutate(IAsR[i])
 
-        play(IAsL, IAsR, BESTL, BESTR)
+        play(IAsL, IAsR)
 
         BESTL=IAsL[0]
         BESTR=IAsR[0]
