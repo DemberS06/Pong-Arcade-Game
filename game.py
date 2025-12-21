@@ -4,7 +4,7 @@ import random
 from settings import BLACK, WHITE, WIDTH, HEIGHT
 
 from settings import (
-    BALL_SPEED, PATH_L, PATH_R, SCORE_X, SCORE_Y, 
+    BALL_SPEED, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
     NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM
 )
@@ -28,8 +28,11 @@ class Game:
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            dir = pygame.Vector2(random.uniform(-1, -0.9), (1.0-random.randint(0, 0))*random.uniform(-0.4, 0.4))
+            dir = pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(0, 0))*random.uniform(0.6, 0.6))
             self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
+
+        for i in range(min(NUM_IA, UPG)):
+            self.matchs[i].ball.direction=pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(1, 1))*random.uniform(0.6, 0.6))
 
         self.walls = [
             # horizontales (rebote)

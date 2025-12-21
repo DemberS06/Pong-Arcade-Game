@@ -43,8 +43,8 @@ def main():
         IAsR = []
 
         for i in range(NUM_IA):
-            IAsL.append(BESTL)
-            IAsR.append(BESTR)
+            IAsL.append(merge([BESTL]))
+            IAsR.append(merge([BESTR]))
             
             if i>0:
                 mutate(IAsL[i])
