@@ -28,11 +28,11 @@ class Game:
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            dir = pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(0, 0))*random.uniform(0.6, 0.6))
+            dir = pygame.Vector2(random.uniform(-1, -0.9), (0.5-random.randint(0, 0))*random.uniform(0.4, 0.8))
             self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
 
         for i in range(min(NUM_IA, UPG)):
-            self.matchs[i].ball.direction=pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(1, 1))*random.uniform(0.6, 0.6))
+            self.matchs[i].ball.direction=pygame.Vector2(random.uniform(-0.7, -0.8), (0.5-random.randint(1, 1))*random.uniform(0.9, 0.9))
 
         self.walls = [
             # horizontales (rebote)
@@ -109,6 +109,8 @@ class Game:
                     obj.append(w)
             
             collided, lft, rgt = M.ball.move_with_collision(obj)
+
+            if collided: M.ball.speed+=0.01
             
             ball_pos=M.ball.get_pos()
             ball_vel=M.ball.get_vel()
