@@ -19,19 +19,22 @@ from IA.IA import Genetic_IA
 from IA.Evolution import merge
 
 class Game:
-    def __init__(self, screen):
+    def __init__(self, screen, i=0):
         self.screen = screen
 
+        self.nUPG=UPG
+        if i%2<=0: self.nUPG=NUM_IA-UPG
+
         self.matchs = []
-        self.match = Match(pdl_lfta=True, pdl_rgta=True)
+        self.match = Match(pdl_lfta=False, pdl_rgta=False)
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            dir = pygame.Vector2(random.uniform(-0.7, -0.8), (0.5-random.randint(0, 0))*random.uniform(0.9, 0.9))
+            dir = pygame.Vector2(-random.uniform(-0.7, -0.8), (0.5-random.randint(0, 0))*random.uniform(0.9, 0.9))
             self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
 
-        for i in range(min(NUM_IA, UPG)):
-            self.matchs[i].ball.direction=pygame.Vector2(random.uniform(-0.7, -0.8), (0.5-random.randint(1, 1))*random.uniform(0.9, 0.9))
+        for i in range(min(NUM_IA, self.nUPG)):
+            self.matchs[i].ball.direction=pygame.Vector2(-random.uniform(-0.7, -0.8), (0.5-random.randint(1, 1))*random.uniform(0.9, 0.9))
 
         self.walls = [
             # horizontales (rebote)
@@ -39,7 +42,7 @@ class Game:
             Wall(True, WALL_HX, WALL_DY, WALL_HLN, bounce=True, score=False, color=WHITE),
 
             # verticales (puntos)
-            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=False, score=True, left=True,  color=BLACK),
+            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=True, score=False, left=True,  color=WHITE),
             Wall(False, WALL_RX, WALL_VY, WALL_VLN, bounce=False, score=True, left=False, color=BLACK),
         ]
 
@@ -74,13 +77,13 @@ class Game:
                 mxl=i
                 LBestL.clear()
             if self.matchs[i].lft_points==self.matchs[mxl].lft_points:
-                LBestL.append(self.IAsL[i])
+                LBestL.append(IAsL[i])
             
             if self.matchs[i].rgt_points>=self.matchs[mxr].rgt_points:
                 mxr=i
                 LBestR.clear()
             if self.matchs[i].rgt_points==self.matchs[mxr].rgt_points:
-                LBestR.append(self.IAsR[i])
+                LBestR.append(IAsR[i])
         
         if TRAINING <= 0:
             IAsL[0] = merge(LBestL)
@@ -107,7 +110,7 @@ class Game:
             
             collided, lft, rgt = M.ball.move_with_collision(obj)
 
-            if collided: M.ball.speed+=0.01
+            if collided: M.ball.speed+=BALL_A
             
             ball_pos=M.ball.get_pos()
             ball_vel=M.ball.get_vel()

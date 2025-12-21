@@ -13,7 +13,7 @@ def play():
     BESTR = Genetic_IA(layers_size)
 
     BESTL.load_from_path(PATH_L+str(GEN)+".json")
-    #BESTR.load_from_path(PATH_R+str(GEN)+".json")
+    BESTR.load_from_path(PATH_R+str(GEN)+".json")
 
     pygame.init()
     pygame.font.init()
@@ -42,7 +42,7 @@ def training():
     BESTR = Genetic_IA(layers_size)
 
     BESTL.load_from_path(PATH_L+str(GEN)+".json")
-    #BESTR.load_from_path(PATH_R+str(GEN)+".json")
+    BESTR.load_from_path(PATH_R+str(GEN)+".json")
 
     for _ in range(10000):
         IAsL = []
@@ -62,7 +62,7 @@ def training():
         pygame.display.set_caption("Pong")
         clock = pygame.time.Clock()
 
-        game = Game(screen)
+        game = Game(screen, _)
 
         running = True
         while running:
@@ -85,8 +85,8 @@ def training():
 
 
 def main():
-    #training()
-    play()
+    training()
+    #play()
     
 
 if __name__ == "__main__":
