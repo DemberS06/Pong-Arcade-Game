@@ -27,12 +27,12 @@ def play(IAsL, IAsR):
                 running = False
 
         game.handle_input()
-        running = game.update()
+        running = game.updateIA()
         game.draw()
 
         pygame.display.flip()
         clock.tick(FPS)
-
+    game.save_IA()
     pygame.quit()
 
 def main():
