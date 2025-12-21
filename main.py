@@ -8,14 +8,21 @@ from game import Game
 from IA.IA import Genetic_IA
 from IA.Evolution import mutate, merge
 
-def play(IAsL, IAsR, BESTL, BESTR):
+def play():
+    BESTL = Genetic_IA(layers_size)
+    BESTR = Genetic_IA(layers_size)
+
+    BESTL.load_from_path(PATH_L+str(GEN)+".json")
+    BESTR.load_from_path(PATH_R+str(GEN)+".json")
+
     pygame.init()
     pygame.font.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Pong")
     clock = pygame.time.Clock()
 
-    game = Game(screen, IAsL, IAsR)
+    game = Game(screen)
 
     running = True
     while running:
@@ -24,21 +31,21 @@ def play(IAsL, IAsR, BESTL, BESTR):
                 running = False
 
         game.handle_input()
-        running = game.updateIA()
+        running = game.update(BESTL, BESTR)
         game.draw()
 
         pygame.display.flip()
         clock.tick(FPS)
-    game.save_IA(IAsL, IAsR)
     pygame.quit()
 
-def main():
+def training():
     BESTL = Genetic_IA(layers_size)
     BESTR = Genetic_IA(layers_size)
 
     BESTL.load_from_path(PATH_L+str(GEN)+".json")
     BESTR.load_from_path(PATH_R+str(GEN)+".json")
-    for _ in range(1000):
+
+    for _ in range(10000):
         IAsL = []
         IAsR = []
 
@@ -50,10 +57,37 @@ def main():
                 mutate(IAsL[i])
                 mutate(IAsR[i])
 
-        play(IAsL, IAsR, BESTL, BESTR)
+        pygame.init()
+        pygame.font.init()
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Pong")
+        clock = pygame.time.Clock()
 
+        game = Game(screen, _)
+
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            game.handle_input()
+            running = running and game.updateIA(IAsL, IAsR)
+            game.draw(_)
+
+            pygame.display.flip()
+            clock.tick(FPS)
+        
+        game.save_IA(IAsL, IAsR)
         BESTL=IAsL[0]
         BESTR=IAsR[0]
+
+        pygame.quit()
+
+
+def main():
+    #training()
+    play()
     
 
 if __name__ == "__main__":
