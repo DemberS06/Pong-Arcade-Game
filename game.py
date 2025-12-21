@@ -4,9 +4,10 @@ import random
 from settings import BLACK, WHITE, WIDTH, HEIGHT
 
 from settings import (
-    PADDLE_HEIGHT, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
+    PADDLE_HEIGHT, BALL_A, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM
+    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM,
+    P_LFT_IA, P_RGT_IA
 )
 
 from objects.paddle import Paddle
@@ -18,13 +19,11 @@ from IA.IA import Genetic_IA
 from IA.Evolution import merge
 
 class Game:
-    def __init__(self, screen, IAsL, IAsR):
+    def __init__(self, screen):
         self.screen = screen
-        self.IAsL=IAsL
-        self.IAsR=IAsR
 
         self.matchs = []
-        self.match = Match(pdl_lfta=False, pdl_rgta=False)
+        self.match = Match(pdl_lfta=True, pdl_rgta=True)
 
         for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
@@ -40,8 +39,8 @@ class Game:
             Wall(True, WALL_HX, WALL_DY, WALL_HLN, bounce=True, score=False, color=WHITE),
 
             # verticales (puntos)
-            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=False, score=True, left=True,  color=WHITE),
-            Wall(False, WALL_RX, WALL_VY, WALL_VLN, bounce=True, score=False, left=False, color=WHITE),
+            Wall(False, WALL_LX, WALL_VY, WALL_VLN, bounce=False, score=True, left=True,  color=BLACK),
+            Wall(False, WALL_RX, WALL_VY, WALL_VLN, bounce=False, score=True, left=False, color=BLACK),
         ]
 
     def handle_input(self):
@@ -91,9 +90,9 @@ class Game:
             IAsR[0] = merge(LBestR)
             IAsR[0].save_to_path(PATH_R+str(GEN)+".json")
 
-    def updateIA(self):
+    def updateIA(self, IAsL, IAsR):
         ok = False
-        for (L, R, M) in zip(self.IAsL, self.IAsR, self.matchs):
+        for (L, R, M) in zip(IAsL, IAsR, self.matchs):
             if M.active(PNTS_LMT)==False:
                 continue
             else:
@@ -116,7 +115,6 @@ class Game:
             inputL = [(M.lft.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-M.lft.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-M.lft.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
             inputR = [(M.rgt.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-M.rgt.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-M.rgt.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
             
-
             if TRAINING<=0:
                 ly=M.lft.rect.y
                 move=L.query(inputL)
@@ -131,7 +129,7 @@ class Game:
                 M.lft_points+=lft
         return ok       
 
-    def update(self):
+    def update(self, BESTL, BESTR):
         if self.match.active(PNTS_LMT)==False:
             return False
         
@@ -150,7 +148,19 @@ class Game:
                 self.match.lft_points+=lft
                 self.match.rgt_points+=rgt
             else:
-                self.match.ball.speed+=0.01
+                self.match.ball.speed+=BALL_A
+
+        ball_pos=self.match.ball.get_pos()
+        ball_vel=self.match.ball.get_vel()
+
+        if P_LFT_IA:
+            inputL = [(self.match.lft.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-self.match.lft.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-self.match.lft.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
+            move=BESTL.query(inputL)
+            self.match.lft.move(move)
+        if P_RGT_IA:
+            inputR = [(self.match.rgt.rect.y+PADDLE_HEIGHT/2)/HEIGHT, (ball_pos.x-self.match.rgt.rect.x)/WIDTH, (ball_pos.y-PADDLE_HEIGHT/2-self.match.rgt.rect.y)/HEIGHT, ball_vel.x/WIDTH, ball_vel.y/HEIGHT]
+            move=BESTR.query(inputR)
+            self.match.rgt.move(move)
         
         return True
 
@@ -164,6 +174,9 @@ class Game:
             self.match.lft.draw(self.screen)
             self.match.rgt.draw(self.screen)
             self.match.ball.draw(self.screen)
+            font = pygame.font.SysFont("Arial", 48)
+            score_text = font.render(str(self.match.lft_points)+"   "+str(self.match.rgt_points), True, self.match.color)
+            self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
         for M in self.matchs:
             if M.active(PNTS_LMT)==False:
@@ -176,6 +189,6 @@ class Game:
             M.ball.draw(self.screen)
 
             font = pygame.font.SysFont("Arial", 48)
-            score_text = font.render(str(M.lft_points)+"   "+str(M.rgt_points), True, (255,255,255))
+            score_text = font.render(str(M.lft_points)+"   "+str(M.rgt_points), True, M.color)
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
