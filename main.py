@@ -17,6 +17,7 @@ def play():
 
     pygame.init()
     pygame.font.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Pong")
     clock = pygame.time.Clock()

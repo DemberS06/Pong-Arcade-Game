@@ -63,3 +63,6 @@ TRAINING = 0
 # Playing settings
 P_LFT_IA = False
 P_RGT_IA = True
+
+# rutes
+PATH_SOUND="assets\\Sounds\\"

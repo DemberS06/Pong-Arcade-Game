@@ -7,7 +7,7 @@ from settings import (
     PADDLE_HEIGHT, BALL_A, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
     NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM, U_WIN, U_LOSE,
-    P_LFT_IA, P_RGT_IA
+    P_LFT_IA, P_RGT_IA, PATH_SOUND
 )
 
 from objects.paddle import Paddle
@@ -148,8 +148,10 @@ class Game:
             if lft or rgt:
                 self.match.lft_points+=lft
                 self.match.rgt_points+=rgt
+                pygame.mixer.Sound(PATH_SOUND+"2.mp3").play()
             else:
                 self.match.ball.speed+=BALL_A
+                pygame.mixer.Sound(PATH_SOUND+"1.mp3").play()
 
         ball_pos=self.match.ball.get_pos()
         ball_vel=self.match.ball.get_vel()
