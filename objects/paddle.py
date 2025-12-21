@@ -1,4 +1,5 @@
-import pygame# paddle.py
+# paddle.py
+import pygame
 from settings import PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, WHITE, HEIGHT
 
 class Paddle:

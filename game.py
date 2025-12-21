@@ -2,18 +2,18 @@
 import pygame
 import random
 from settings import BLACK, WHITE, WIDTH, HEIGHT
-from objects.paddle import Paddle
-
-from objects.wall import Wall
 
 from settings import (
     PAD_LX, PAD_RX, PAD_Y,
-    BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED, BALL_DIR,
+    BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
     SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT, GEN
 )
 
+from objects.paddle import Paddle
 from objects.ball import Ball
+from objects.wall import Wall
+from objects.match import Match
 
 from IA.IA import Genetic_IA
 from IA.Evolution import merge
@@ -28,23 +28,14 @@ class Game:
         self.left_paddle =  Paddle(PAD_LX, PAD_Y, active=True)
         self.right_paddle = Paddle(PAD_RX, PAD_Y, active=True)
 
-        self.balls = []
-        self.pad_lft = []
-        self.pad_rgt = []
-        self.points_lft = []
-        self.points_rgt = []
+        self.matchs = []
         self.pointsl=0
         self.pointsr=0
 
-        BALL_DIR=pygame.Vector2(random.uniform(-1, -0.9), random.uniform(0.5, 0.8)*(0.5-random.randint(0, 1)))
-
-        for i in range(NUM_IA):
+        for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            self.balls.append(Ball(BALL_X, BALL_Y, color, direction=pygame.Vector2(random.uniform(-1, -0.9), random.uniform(-0.4, 0.4)), speed=BALL_SPEED, radius=BALL_RADIUS))
-            self.pad_lft.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
-            self.pad_rgt.append(Paddle(PAD_RX, PAD_Y, color=color, active=True))
-            self.points_lft.append(0)
-            self.points_rgt.append(0)
+            dir = pygame.Vector2(random.uniform(-1, -0.9), random.uniform(-0.4, 0.4))
+            self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
 
         self.walls = [
             # horizontales (rebote)
@@ -69,6 +60,42 @@ class Game:
 
     def updateIA(self):
         ok = False
+        for (L, R, M) in zip(self.IAsL, self.IAsR, self.matchs):
+            if M.active(PNTS_LMT)==False:
+                continue
+            else:
+                ok=True
+            obj = []
+            obj.append(M.lft)
+            obj.append(M.rgt)
+
+            for w in self.walls:
+                if w.active:
+                    obj.append(w)
+            
+            collided, lft, rgt = M.ball.move_with_collision(obj)
+
+            if collided:
+                if lft or rgt:
+                    M.lft_points+=lft-rgt*2
+                    M.rgt_points+=rgt
+                else:
+                    M.ball.speed+=0.01
+                    M.lft_points+=0.05
+            
+            ball_pos=M.ball.get_pos()
+            ball_vel=M.ball.get_vel()
+
+            inputL = [M.lft.rect.x/WIDTH, M.lft.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputR = [M.rgt.rect.x/WIDTH, M.rgt.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputL[0]=0
+            if TRAINING<=0:
+                M.lft_points+=M.lft.move(L.query(inputL))/5000000 + (WIDTH-abs(M.lft.rect.y+PAD_Y/2-ball_pos.y))/WIDTH/3000000
+            #if TRAINING>=0:
+                #self.pad_rgt[i].points+=self.pad_rgt[i].move(self.IAsR[i].query(inputR))/4000
+        return ok
+    
+
         for i in range(NUM_IA):
             if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
                 continue
@@ -109,6 +136,7 @@ class Game:
         if self.updateIA():
             return True
         else:
+            return False
             LBestL = []
             LBestR = []
             mxl=0
@@ -169,17 +197,17 @@ class Game:
         #self.right_paddle.draw(self.screen)
         #self.ball.draw(self.screen)
 
-        for i in range (NUM_IA):
-            if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
+        for M in self.matchs:
+            if M.active(PNTS_LMT)==False:
                 continue
             
             if TRAINING<=0:
-                self.pad_lft[i].draw(self.screen)
+                M.lft.draw(self.screen)
             if TRAINING>=0:
-                self.pad_rgt[i].draw(self.screen)
-            self.balls[i].draw(self.screen)
+                M.rgt.draw(self.screen)
+            M.ball.draw(self.screen)
 
             font = pygame.font.SysFont("Arial", 48)
-            score_text = font.render(str(self.pad_lft[i].points)+"   "+str(self.pad_rgt[i].points), True, (255,255,255))
+            score_text = font.render(str(M.lft_points)+"   "+str(M.rgt_points), True, (255,255,255))
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
