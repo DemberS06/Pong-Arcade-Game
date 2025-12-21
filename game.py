@@ -1,19 +1,18 @@
 # game.py
 import pygame
 import random
-from settings import BLACK, WHITE
-from objects.paddle import Paddle
-
-from objects.wall import Wall
+from settings import BLACK, WHITE, WIDTH, HEIGHT
 
 from settings import (
-    PAD_LX, PAD_RX, PAD_Y,
-    BALL_X, BALL_Y, BALL_RADIUS, BALL_SPEED, BALL_DIR,
+    BALL_SPEED, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    SCORE_X, SCORE_Y, NUM_IA, TRAINING, PATH_L, PATH_R, PNTS_LMT
+    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM
 )
 
+from objects.paddle import Paddle
 from objects.ball import Ball
+from objects.wall import Wall
+from objects.match import Match
 
 from IA.IA import Genetic_IA
 from IA.Evolution import merge
@@ -24,25 +23,16 @@ class Game:
         self.IAsL=IAsL
         self.IAsR=IAsR
 
-        self.ball = Ball(BALL_X, BALL_Y, WHITE, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS)
-        self.left_paddle =  Paddle(PAD_LX, PAD_Y, active=True)
-        self.right_paddle = Paddle(PAD_RX, PAD_Y, active=True)
+        self.matchs = []
+        self.match = Match(pdl_lfta=False, pdl_rgta=False)
 
-        self.balls = []
-        self.pad_lft = []
-        self.pad_rgt = []
-        self.points_lft = []
-        self.points_rgt = []
-        self.pointsl=0
-        self.pointsr=0
-
-        for i in range(NUM_IA):
+        for _ in range(NUM_IA):
             color = (random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255))
-            self.balls.append(Ball(BALL_X, BALL_Y, color, direction=BALL_DIR, speed=BALL_SPEED, radius=BALL_RADIUS))
-            self.pad_lft.append(Paddle(PAD_LX, PAD_Y, color=color, active=True))
-            self.pad_rgt.append(Paddle(PAD_RX, PAD_Y, color=color, active=True))
-            self.points_lft.append(0)
-            self.points_rgt.append(0)
+            dir = pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(0, 0))*random.uniform(0.6, 0.6))
+            self.matchs.append(Match(color=color, balld=dir, pdl_lft_ia=True, pdl_rgt_ia=True))
+
+        for i in range(min(NUM_IA, UPG)):
+            self.matchs[i].ball.direction=pygame.Vector2(random.uniform(-1, -1), (0.5-random.randint(1, 1))*random.uniform(0.6, 0.6))
 
         self.walls = [
             # horizontales (rebote)
@@ -57,104 +47,112 @@ class Game:
     def handle_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            self.left_paddle.move(-1)
+            self.match.lft.move(-1)
         if keys[pygame.K_s]:
-            self.left_paddle.move(1)
+            self.match.lft.move(1)
         if keys[pygame.K_UP]:
-            self.right_paddle.move(-1)
+            self.match.rgt.move(-1)
         if keys[pygame.K_DOWN]:
-            self.right_paddle.move(1)
+            self.match.rgt.move(1)
+
+    def get_fitness(self, coll, p1, p2, ly, ny, by, mv):
+        res = p1
+        if coll: res+=             U_COL
+        res+=(1-abs(ny-by)/HEIGHT)*U_DIS
+        res+=(  abs(ly-ny)/HEIGHT)*U_MOV
+
+        if mv!=0 and ly==ny:
+            res+=U_LIM
+
+        return res
+
+    def save_IA(self, IAsL, IAsR):
+        LBestL = []
+        LBestR = []
+        mxl=0
+        mxr=0
+
+        for i in range(NUM_IA):
+            if self.matchs[i].lft_points>=self.matchs[mxl].lft_points:
+                mxl=i
+                LBestL.clear()
+            if self.matchs[i].lft_points==self.matchs[mxl].lft_points:
+                LBestL.append(self.IAsL[i])
+            
+            if self.matchs[i].rgt_points>=self.matchs[mxr].rgt_points:
+                mxr=i
+                LBestR.clear()
+            if self.matchs[i].rgt_points==self.matchs[mxr].rgt_points:
+                LBestR.append(self.IAsR[i])
+        
+        if TRAINING <= 0:
+            IAsL[0] = merge(LBestL)
+            IAsL[0].save_to_path(PATH_L+str(GEN)+".json")
+        
+        if TRAINING >=0:
+            IAsR[0] = merge(LBestR)
+            IAsR[0].save_to_path(PATH_R+str(GEN)+".json")
 
     def updateIA(self):
         ok = False
-        for i in range(NUM_IA):
-            if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
+        for (L, R, M) in zip(self.IAsL, self.IAsR, self.matchs):
+            if M.active(PNTS_LMT)==False:
                 continue
             else:
                 ok=True
-            objects = []
-            objects.append(self.pad_lft[i])
-            objects.append(self.pad_rgt[i])
-            
+            obj = []
+            obj.append(M.lft)
+            obj.append(M.rgt)
+
             for w in self.walls:
                 if w.active:
-                    objects.append(w)
+                    obj.append(w)
             
-            collided, lft, rgt = self.balls[i].move_with_collision(objects)
-
-            if collided:
-                if lft or rgt:
-                    self.pad_lft[i].points+=lft
-                    self.pad_rgt[i].points+=rgt
-                else:
-                    self.balls[i].speed+=0.01
-                    self.pad_lft[i].points+=1
+            collided, lft, rgt = M.ball.move_with_collision(obj)
             
-            ball_pos=self.balls[i].get_pos()
-            ball_vel=self.balls[i].get_vel()
+            ball_pos=M.ball.get_pos()
+            ball_vel=M.ball.get_vel()
 
-            inputL = [self.pad_lft[i].rect.x, self.pad_lft[i].rect.y, ball_pos.x, ball_pos.y, ball_vel.x, ball_vel.y]
-            inputR = [self.pad_rgt[i].rect.x, self.pad_rgt[i].rect.y, ball_pos.x, ball_pos.y, ball_vel.x, ball_vel.y]
+            inputL = [M.lft.rect.x/WIDTH, M.lft.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputR = [M.rgt.rect.x/WIDTH, M.rgt.rect.y/HEIGHT, ball_pos.x/WIDTH, ball_pos.y/HEIGHT, ball_vel.x/BALL_SPEED, ball_vel.y/BALL_SPEED]
+            inputL[0]=0
 
             if TRAINING<=0:
-                self.pad_lft[i].move(self.IAsL[i].query(inputL))
+                ly=M.lft.rect.y
+                move=L.query(inputL)
+                M.lft.move(move)
+                M.lft_points+=self.get_fitness(coll = collided, p1 = lft, p2 = rgt, ly = ly, ny = M.lft.rect.y, by = ball_pos.y, mv=move)
+                M.rgt_points+=rgt
             if TRAINING>=0:
-                self.pad_rgt[i].move(self.IAsR[i].query(inputR))
-        return ok
+                ly=M.rgt.rect.y
+                move=R.query(inputR)
+                M.rgt.move(move)
+                M.rgt_points+=self.get_fitness(coll = collided, p1 = rgt, p2 = lft, ly = ly, ny = M.rgt.rect.y, by = ball_pos.y, mv=move)
+                M.lft_points+=lft
+        return ok       
 
     def update(self):
-
-        if self.updateIA():
-            return True
-        else:
-            BestL = []
-            BestR = []
-            mxl=0
-            mxr=0
-
-            for i in range(NUM_IA):
-                if self.points_lft[i]>self.points_lft[mxl]:
-                    mxl=i
-                    BestL.clear()
-                if self.points_lft[i]==self.points_lft[mxl]:
-                    BestL.append(self.IAsL[i])
-                
-                if self.points_rgt[i]>self.points_rgt[mxr]:
-                    mxr=i
-                    BestR.clear()
-                if self.points_rgt[i]==self.points_rgt[mxr]:
-                    BestR.append(self.IAsR[i])
-            
-            if TRAINING <= 0:
-                IALft = merge(BestL)
-                IALft.save_to_path(PATH_L+str(0)+".json")
-            
-            if TRAINING >=0:
-                IARgt = merge(BestR)
-                IARgt.save_to_path(PATH_R+str(0)+".json")
-            
+        if self.match.active(PNTS_LMT)==False:
             return False
         
-
-        objects = []
-        #if self.left_paddle.active:
-        objects.append(self.left_paddle)
-        #if self.right_paddle.active:
-        objects.append(self.right_paddle)
+        obj = []
+        obj.append(self.match.lft)
+        obj.append(self.match.rgt)
 
         for w in self.walls:
-            if w.active:    
-                objects.append(w)
-
-        collided, lft, rgt = self.ball.move_with_collision(objects)
+            if w.active:
+                obj.append(w)
+        
+        collided, lft, rgt = self.match.ball.move_with_collision(obj)
 
         if collided:
             if lft or rgt:
-                self.pointsl+=lft
-                self.pointsr+=rgt
+                self.match.lft_points+=lft
+                self.match.rgt_points+=rgt
             else:
-                self.ball.speed+=0.1
-        pass
+                self.match.ball.speed+=0.01
+        
+        return True
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -162,21 +160,22 @@ class Game:
             if wall.active:
                 wall.draw(self.screen)
 
-        #self.left_paddle.draw(self.screen)
-        #self.right_paddle.draw(self.screen)
-        #self.ball.draw(self.screen)
+        if self.match.active(PNTS_LMT):
+            self.match.lft.draw(self.screen)
+            self.match.rgt.draw(self.screen)
+            self.match.ball.draw(self.screen)
 
-        for i in range (NUM_IA):
-            if self.pad_lft[i].points>=PNTS_LMT or self.pad_rgt[i].points>=PNTS_LMT:
+        for M in self.matchs:
+            if M.active(PNTS_LMT)==False:
                 continue
             
             if TRAINING<=0:
-                self.pad_lft[i].draw(self.screen)
+                M.lft.draw(self.screen)
             if TRAINING>=0:
-                self.pad_rgt[i].draw(self.screen)
-            self.balls[i].draw(self.screen)
+                M.rgt.draw(self.screen)
+            M.ball.draw(self.screen)
 
             font = pygame.font.SysFont("Arial", 48)
-            score_text = font.render(str(self.pad_lft[i].points)+"   "+str(self.pad_rgt[i].points), True, (255,255,255))
+            score_text = font.render(str(M.lft_points)+"   "+str(M.rgt_points), True, (255,255,255))
             self.screen.blit(score_text, (SCORE_X, SCORE_Y))
 
