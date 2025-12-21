@@ -6,7 +6,7 @@ from settings import BLACK, WHITE, WIDTH, HEIGHT
 from settings import (
     PADDLE_HEIGHT, BALL_A, PATH_L, PATH_R, SCORE_X, SCORE_Y, UPG,
     WALL_HX, WALL_UY, WALL_DY, WALL_HLN, WALL_LX, WALL_RX, WALL_VY, WALL_VLN, 
-    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM, U_WIN,
+    NUM_IA, TRAINING, PNTS_LMT, GEN, U_COL, U_MOV, U_DIS, U_LIM, U_WIN, U_LOSE,
     P_LFT_IA, P_RGT_IA
 )
 
@@ -58,7 +58,7 @@ class Game:
             self.match.rgt.move(1)
 
     def get_fitness(self, coll, p1, p2, ly, ny, by, mv):
-        res = p1*U_WIN
+        res = p1*U_WIN-p2*U_LOSE
         if coll: res+=             U_COL
         res+=(1-abs(ny+PADDLE_HEIGHT/2-by)/HEIGHT)*U_DIS
         res+=(  abs(ly-ny)/HEIGHT)*U_MOV
@@ -123,13 +123,11 @@ class Game:
                 move=L.query(inputL)
                 M.lft.move(move)
                 M.lft_points+=self.get_fitness(coll = collided, p1 = lft, p2 = rgt, ly = ly, ny = M.lft.rect.y, by = ball_pos.y, mv=move)
-                M.rgt_points+=rgt
             if TRAINING>=0:
                 ly=M.rgt.rect.y
                 move=R.query(inputR)
                 M.rgt.move(move)
                 M.rgt_points+=self.get_fitness(coll = collided, p1 = rgt, p2 = lft, ly = ly, ny = M.rgt.rect.y, by = ball_pos.y, mv=move)
-                M.lft_points+=lft
         return ok       
 
     def update(self, BESTL, BESTR):
